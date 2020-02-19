@@ -1,10 +1,10 @@
 # main links links
 main:
   - title: "litreview"
-    url: /litrev/
+    url: /litreview/
     
   - title: "projects"
-    url: /pojects/
+    url: /projects/
         
   - title: "blog posts"
     url: /year-archive/
