@@ -1,8 +1,8 @@
 ---
 layout: archive
-title: "Publications"
-permalink: /publications/
-author_profile: true
+title: "Literature Review"
+permalink: /litreview/
+author_profile: false
 ---
 
 {% if author.googlescholar %}
@@ -11,6 +11,6 @@ author_profile: true
 
 {% include base_path %}
 
-{% for post in site.publications reversed %}
+{% for post in site.litreview reversed %}
   {% include archive-single.html %}
 {% endfor %}
