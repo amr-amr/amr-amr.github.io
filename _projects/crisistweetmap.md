@@ -1,6 +1,6 @@
 ---
 title: "CrisisTweetMap"
-excerpt: "Using Natural Language Processing to categorize and map tweets in real-time during crises <br/><img src='https://raw.githubusercontent.com/amr-amr/CrisisTweetMap/master/doc/output.gif'>"
+excerpt: "Using Natural Language Processing to categorize and map tweets in real-time during crises"
 collection: projects
 ---
 ## What
