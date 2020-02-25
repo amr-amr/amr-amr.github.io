@@ -14,7 +14,8 @@ dataset from [reddit.com/r/AmITheAsshole](https://www.reddit.com/r/AmITheAsshole
 
 ## Background
 As part of the [ImplementAI 2019 hackathon](https://implementai-2019.devpost.com/) 
-I wanted to build something fun with the [AllenNLP](https://allennlp.org/) library. 
+I wanted to build [something fun](https://devpost.com/software/implementaita/) 
+with the [AllenNLP](https://allennlp.org/) library. 
 I decided to scrape my own dataset from 
 [reddit.com/r/AmItheAsshole/](https://www.reddit.com/r/AmItheAsshole/).
 
