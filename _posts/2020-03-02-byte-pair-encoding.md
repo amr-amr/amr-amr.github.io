@@ -41,7 +41,7 @@ can then be converted to numerical representations such as word embeddings.
 
 Generally, tokenization was done on a word-level basis. However, this leads to 
 the issue of __out-of-vocabulary__ words, whereby new words can not be represented.
-New words can include misspellings, rare words such 
+New words can include misspellings, rare words such as
 ["Penrhyndeudraeth"](https://en.wikipedia.org/wiki/Penrhyndeudraeth), or 
 [neologisms](https://en.wikipedia.org/wiki/Neologism) such as 
 ["yeeted"](https://www.urbandictionary.com/define.php?term=Yeet). 
