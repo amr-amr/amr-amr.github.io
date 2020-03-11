@@ -3,6 +3,7 @@ layout: compress
 ---
 
 {% include base_path %}
+{% include toc %}
 
 <!doctype html>
 <html lang="{{ site.locale | slice: 0,2 }}" class="no-js">
@@ -15,7 +16,7 @@ layout: compress
 
     {% include browser-upgrade.html %}
     {% include masthead.html %}
-    {% include toc %}
+
 
     {{ content }}
 
