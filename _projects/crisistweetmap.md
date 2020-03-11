@@ -4,6 +4,7 @@ excerpt: "Using Natural Language Processing to categorize and map tweets in real
 collection: projects
 comments: true
 toc: true
+toc_label: "Table of Contents"
 toc_icon: "cog"
 ---
 ## What
