@@ -7,7 +7,7 @@
 
 # Site Settings
 locale                   : "en-US"
-title                    : "amr-amr"
+title                    : "amr-amr-github-io"
 title_separator          : "-"
 name                     : &name "Andrei Mircea"
 description              : &description "M.Sc. Natural Language Processing @ McGill University"
