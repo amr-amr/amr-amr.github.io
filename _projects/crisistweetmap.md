@@ -3,8 +3,10 @@ title: "CrisisTweetMap"
 excerpt: "Using Natural Language Processing to categorize and map tweets in real-time during crises"
 collection: projects
 comments: true
+toc: true
+toc_icon: "cog"
 ---
-# What
+## What
 <br/><img src='https://raw.githubusercontent.com/amr-amr/CrisisTweetMap/master/doc/output.gif'>
 [CrisisTweetMap](https://github.com/amr-amr/CrisisTweetMap) is a proof-of-concept I built over 24 hours as part of the 
 [McHacks 7](https://mchacks7.devpost.com/) hackathon, winning first place.
@@ -14,7 +16,7 @@ and geolocated with a named-entity recognizer and Gazetteer.
 This allows tweets and their content to be plotted in real-time on a map, 
 color-coded by category and recency.
 
-# Why
+## Why
 During extreme events such as natural disasters or virus outbreaks, 
 crisis managers are the decision makers. 
 Their job is difficult since the right decision can save lives 
@@ -36,14 +38,14 @@ in a way that makes them easy to parse and filter,
 so as to quickly extract useful and actionable information.
 
 
-# How
-## Tweet scraping
+## How
+### Tweet scraping
 I used [Tweepy](http://docs.tweepy.org/en/latest/streaming_how_to.html#streaming-with-tweepy) 
 to get live tweets from the Twitter streaming API. 
 As they are scraped, tweets are immediately classified, geolocated, and pushed to a SQLite database.
 
 
-## Tweet classification
+### Tweet classification
 I used [AllenNLP](https://allennlp.org/) to train a classifier by fine-tuning BERT,
 similar to this [excellent tutorial](https://medium.com/analytics-vidhya/fine-tuning-bert-with-allennlp-7459119b736c). 
 The model was trained on [labeled tweets from the MERS 2014 outbreak](https://crisisnlp.qcri.org/lrec2016/lrec2016.html) 
@@ -62,7 +64,7 @@ These issues are addressed with BERT thanks to self-supervised pretraining and w
 In the end, I obtained a [validation accuracy of 80.3%](https://github.com/amr-amr/CrisisTweetMap/blob/master/tweet_classifier/saved_models/bert_classification/metrics.json) 
 with this approach. 
 
-## Tweet geolocation
+### Tweet geolocation
 Most tweets do not contain geolocation. In these cases, I tried to approximate
 a tweet's coordinates by extracting locations from the tweet text or user profile.
 Initially, I tried using [spaCy's named entity recognition](https://spacy.io/usage/linguistic-features#named-entities) to extract locations.
@@ -74,7 +76,7 @@ While I was able to alleviate this with an [lru cache](https://docs.python.org/3
 I was still having issues and decided to switch to an offline [gazetteer](https://en.wikipedia.org/wiki/Gazetteer).
 Specifically, I used the [Geonames](https://www.geonames.org/) gazetteer, running on an Elasticsearch container from [mordecai](https://github.com/openeventdata/mordecai).
 
-## Live tweet visualization
+### Live tweet visualization
 To visualize the classified and geolocated tweets, I used [Plotly Dash](https://plot.ly/dash/) to create an interactive app.
 I built on top of the excellent [Dash Uber Rides Demo](https://github.com/plotly/dash-sample-apps/tree/master/apps/dash-uber-rides-demo) to
 leverage [mapbox](https://www.mapbox.com/). 
