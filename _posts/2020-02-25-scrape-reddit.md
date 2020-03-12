@@ -99,12 +99,12 @@ since I was short on time.
 
 ```python
 comment_filter = ['author', 'author_fullname', 'body', 'is_submitter', 'id',
-                  'link_id', 'parent_id', 'score','total_awards_received']
+                  'link_id', 'parent_id', 'score', 'total_awards_received']
 df_comments = pd.DataFrame()
-for q in ['NTA', 'YTA', 'ESH', 'NAH', 'INFO']:
+for q in ["NTA", "YTA", "ESH", "NAH", "INFO"]:
     comments_gen = api.search_comments(
         after=start_dt,
-        subreddit='amitheasshole',
+        subreddit="amitheasshole",
         filter=comment_filter,
         q=q,
     )
@@ -113,54 +113,78 @@ for q in ['NTA', 'YTA', 'ESH', 'NAH', 'INFO']:
         comments.append(comment.d_)
         if len(comments) == 100_000:
             df_comments = df_comments.append(pd.DataFrame(comments))
-            df_comments.to_pickle('aita_2019_comments.pkl')
+            df_comments.to_pickle("aita_2019_comments.pkl")
             break
-    df_comments.to_pickle('aita_2019_comments.pkl')
+    df_comments.to_pickle("aita_2019_comments.pkl")
 ```
 
-### Tokenization
-With our vocabulary, we can now perform greedy subword tokenization. 
-There's also a pretty interesting [paper](https://arxiv.org/abs/1804.10959) 
-on the regularizing effect of tokenizing non-greedily.
+### Consolidating posts and comments
+Now that we have our submissions and comments, we need to clean them.
+First, we remove posts which do not have the right prefix and are thus not likely 
+to be an "Am I The Asshole?" question. We also remove posts which do not have 
+descriptions (selftext). Lastly, we remove posts which have no comments.
 
 ```python
-def tokenize(text: str) -> List[str]:
-    tokens = []
-    token = None
-    for c in text:
-        # expand previous token by one character or append previous token to tokens
-        if token is not None:
-            new_token = token + c
-            if new_token not in vocab_stoi:
-                tokens.append(token)
-                token = None
-            else:
-                token = new_token
 
-        # handle oov tokens
-        if c not in vocab_stoi:
-            tokens.append('<unk>')
-
-        # begin new token
-        elif token is None:
-            token = c
-    
-    # append last token
-    if token:
-        tokens.append(token)
-
-    return tokens
-
-def detokenize(tokens: List[str]) -> str:
-    text = "".join(tokens)
-    return text
-
-def encode(text: str) -> List[int]:
-    return [vocab_stoi[s] for s in tokenize(text)]
-
-def decode(encodings: List[int]) -> str:
-    return detokenize([vocab_itos[i] for i in encodings])
+def clean_posts(df):
+    df = df.loc[(df["title"].str.startswith("AITA")) | (df["title"].str.startswith("WIBTA"))]
+    df = df.loc[~(df["selftext"] == "[removed]")]
+    df = df.loc[~(pd.isna(df["selftext"]))]
+    df = df.loc[~df.selftext == ""]
+    df = df.loc[df["num_comments"] > 0]
+    return df
 ```
 
-For a more complete and customizable implementation of BPE, you can check out a 
-small module I wrote here: [py-bpe](https://github.com/amr-amr/py-bpe)
+The process for cleaning comments is a little more involved. 
+First, we keep only top-level comments which are a direct response to the submission, and
+not to another comment. Then we remove comments from submissions we did not scrape. 
+Lastly, we remove comments which have no labels or more than one.
+
+```python
+def clean_comments(df, post_ids):
+    df = df.loc[df["parent_id"] == df["link_id"]]
+    df["link_id"] = df["link_id"].apply(lambda x: x[3:])
+    df = df.loc[df["link_id"].isin(post_ids)]
+
+    def find_labels(text: str):
+        return [q for q in ["NTA", "YTA", "ESH", "NAH", "INFO"] if q in text]
+
+    df["labels"] = df["body"].apply(lambda x: find_labels(x))
+    df["num_labels"] = df["labels"].apply(lambda x: len(x))
+    df = df.loc[df["num_labels"] == 1]
+    df["labels"] = df["labels"].apply(lambda x: x[0])
+    return df
+```
+
+Lastly, we can use the `clean_posts` and `clean_comments` functions to merge 
+together submissions and comments and get the class probabilities for each post.
+```python
+def merge_comments_and_posts(df_posts, df_comments):
+    # map labels to indices
+    itol = ["NTA", "YTA", "ESH", "NAH", "INFO"]
+    ltoi = {l:i for i,l in enumerate(itol)}
+
+    # clean posts and comments
+    df_posts = clean_posts(df_posts)
+    post_ids = df_posts.id.to_list()
+    df_comments = clean_comments(df_comments, post_ids)
+    
+    # get label scores/counts for each post
+    comment_labels = df_comments.labels.to_list()
+    comment_post_ids = df_comments.link_id.to_list()
+    comment_score = df_comments.score.to_list()
+    post_labels_dict = {post_id: [0,0,0,0,0] for post_id in post_ids}
+    for post_id, label, score in zip(comment_post_ids, comment_labels, comment_score):
+        post_labels_dict[post_id][ltoi[label]] += score
+    df_posts["label_counts"] = [post_labels_dict[post_id] for post_id in post_ids]
+    
+    # get label probabilities for each post
+    df_posts["label_sum"] = df_posts["label_counts"].apply(lambda x: sum(x))
+    df_posts = df_posts[df_posts["label_sum"] > 0]
+    df_posts["label_probs"] = [[c/s for c in counts] for counts, s in zip(
+        df_posts["label_counts"], df_posts["label_sum"])]
+
+    df_posts.to_pickle("aita_2019_posts_labeled.pkl")
+    df_comments.to_pickle("aita_2019_comments_cleaned.pkl")
+```
+That's it! You can find the whole code [here](https://github.com/amr-amr/am-i-the-asshole/blob/master/data/get_data.py).
