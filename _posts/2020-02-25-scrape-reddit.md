@@ -35,47 +35,14 @@ the target output is one of the 5 labels described above.
 If I scrape submissions and their comments, I can extract the most "likely" label 
 based on the cumulative scores of comments for each label. 
 
-## Advantages of BPE
-Converting text to a format that allows it to be input into machine learning 
-models is an important part of NLP. This typically involves tokenization:
-splitting the text into tokens that can be mapped to a vocabulary. These 
-can then be converted to numerical representations such as word embeddings.
+## Code
+### Which library to use
+I had previously used [praw](https://github.com/praw-dev/praw) to scrape reddit 
+live, however this option requires credentials to use reddit’s API and the 
+rate-limits can be restrictive if you’re trying to scrape a large historic dataset.
 
-Generally, tokenization was done on a word-level basis. However, this leads to 
-the issue of __out-of-vocabulary__ words, whereby new words can not be represented.
-New words can include misspellings, rare words such as
-["Penrhyndeudraeth"](https://en.wikipedia.org/wiki/Penrhyndeudraeth), or 
-[neologisms](https://en.wikipedia.org/wiki/Neologism) such as 
-["yeeted"](https://www.urbandictionary.com/define.php?term=Yeet). 
-Character-level models can address this, but presumably have limited representational 
-capacities compared to word-level models, since words are very much more than 
-the sum of their characters. 
-
-Subword-level models represent the best of both worlds. They address the issue 
-of out-of-vocabulary words while maintaining rich word-level representations, 
-and can potentially learn relevant morphological subword representations. For example, 
-if "yeet" and "-ing" are in my vocabulary but I have never seen "yeeting", I can
-still infer that "yeeting" means "to yeet".
-
-## BPE in code
-### Initial vocabulary
-First we load our corpus and define our initial vocabulary as all the 
-[latin unicode characters](https://en.wikipedia.org/wiki/Plane_(Unicode)#Basic_Multilingual_Plane) 
-and any other characters in our corpus.
-However, its worth noting that many models use actual bytes to support all 
-languages with a smaller vocabulary. 
-```python
-from pathlib import Path
-
-vocab_itos = ['<unk>'] + [chr(i) for i in range(0x0000, 0x024f)]
-vocab_stoi = {s: i for i,s in enumerate(vocab_itos)}
-
-corpus = Path("corpus.txt").read_text()
-for c in set(corpus):
-    if c not in vocab_stoi:
-        vocab_stoi[c] = len(vocab_itos)
-        vocab_itos += [c]
-```
+Instead, I opted to use [psaw](https://github.com/dmarx/psaw) which wraps 
+the pushshift.io API and is much more forgiving for scraping larger historic datasets.  
 
 ### Pre-tokenization
 If we were to naively run BPE on the entire corpus, the complexity would be 
