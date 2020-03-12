@@ -98,17 +98,6 @@ Here, I decided to only scrape 100,000 comments for each label,
 since I was short on time.
 
 ```python
-comment_filter = [
-    'author',
-    'author_fullname',
-    'body',
-    'is_submitter',
-    'id',
-    'link_id', 
-    'parent_id', 
-    'score',
-    'total_awards_received',
-]
 df_comments = pd.DataFrame()
 for q in ['NTA', 'YTA', 'ESH', 'NAH', 'INFO']:
     comments_gen = api.search_comments(
