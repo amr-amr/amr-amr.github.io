@@ -13,26 +13,27 @@ dataset from [reddit.com/r/AmITheAsshole](https://www.reddit.com/r/AmITheAsshole
 
 {% include toc %}
 
-## What is BPE
-[Byte-pair encoding](https://en.wikipedia.org/wiki/Byte_pair_encoding) 
-is a simple data compression algorithm that recursively combines most 
-frequently co-occurring atoms (byte-pairs) into new atoms:
+## Background
+As part of the [ImplementAI 2019 hackathon](https://implementai-2019.devpost.com/) 
+I wanted to build [something fun](https://devpost.com/software/implementaita/) 
+with the [AllenNLP](https://allennlp.org/) library. 
+I decided to scrape my own dataset from 
+[reddit.com/r/AmItheAsshole/](https://www.reddit.com/r/AmItheAsshole/).
 
-```python
-# encoded string        atoms
-s = 'aaabdaaabacabaa'   # {a,b,c,d}
-s = 'ZabdZabacabZ'      # {Z=aa,a,b,c,d}
-s = 'ZYdZYacYZ'         # {Z=aa,Y=ab,a,b,c,d}
-s = 'XdXacYZ'           # {Z=aa,Y=ab,X=ZY,a,b,c,d}
-```
+On this subreddit, people post submissions which describe a situation they are in, 
+and they ask whether or not they are the asshole in that situation. Then, people
+reply with their opinion which other people can vote on. Normally, a submission is 
+prefixed with `[AITA]`, and commenters prefix their responses with 
+`NTA` for "not the asshole", 
+`YTA` for "you're the asshole", 
+`ESH` for "everyone sucks here",
+`NAH` for "no assholes here", and
+`INFO` for "more info needed".
 
-With minor modifications, BPE can be used on a corpus of natural 
-language text to create a set of atoms that contains frequent words and subwords, 
-as well as characters. 
-
-This subword-level representation has many advantages for NLP tasks, which is why 
-it has been successfully used in many recent state-of-the-art language 
-representation models such as BERT and GPT-2.
+My goal was to create a dataset where, given a submission title and description,
+the target output is one of the 5 labels described above. 
+If I scrape submissions and their comments, I can extract the most "likely" label 
+based on the cumulative scores of comments for each label. 
 
 ## Advantages of BPE
 Converting text to a format that allows it to be input into machine learning 
