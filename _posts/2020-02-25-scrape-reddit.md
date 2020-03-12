@@ -13,7 +13,7 @@ dataset from [reddit.com/r/AmITheAsshole](https://www.reddit.com/r/AmITheAsshole
 
 {% include toc %}
 
-## Background
+## Some background
 As part of the [ImplementAI 2019 hackathon](https://implementai-2019.devpost.com/) 
 I wanted to build [something fun](https://devpost.com/software/implementaita/) 
 with the [AllenNLP](https://allennlp.org/) library. 
@@ -44,7 +44,7 @@ rate-limits can be restrictive if you’re trying to scrape a large historic dat
 Instead, I opted to use [psaw](https://github.com/dmarx/psaw) which wraps 
 the pushshift.io API and is much more forgiving for scraping larger historic datasets.  
 
-## Code
+## Some code
 First, let's instantiate a generator for submissions (posts) on a given subreddit,
 starting from a given date. We also specify which fields we want to keep in a 
 submission object to reduce bandwidth.
