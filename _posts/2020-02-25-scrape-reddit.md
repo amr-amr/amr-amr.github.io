@@ -127,11 +127,11 @@ descriptions (selftext). Lastly, we remove posts which have no comments.
 ```python
 
 def clean_posts(df):
-    df = df.loc[(df["title"].str.startswith("AITA")) | (df["title"].str.startswith("WIBTA"))]
-    df = df.loc[~(df["selftext"] == "[removed]")]
-    df = df.loc[~(pd.isna(df["selftext"]))]
-    df = df.loc[~df.selftext == ""]
-    df = df.loc[df["num_comments"] > 0]
+    df = df.loc[(df['title'].str.startswith('AITA')) | (df['title'].str.startswith('WIBTA'))]
+    df = df.loc[~(df['selftext'] == '[removed]')]
+    df = df.loc[~(pd.isna(df['selftext']))]
+    df = df.loc[~df.selftext == '']
+    df = df.loc[df['num_comments'] > 0]
     return df
 ```
 
@@ -142,17 +142,17 @@ Lastly, we remove comments which have no labels or more than one.
 
 ```python
 def clean_comments(df, post_ids):
-    df = df.loc[df["parent_id"] == df["link_id"]]
-    df["link_id"] = df["link_id"].apply(lambda x: x[3:])
-    df = df.loc[df["link_id"].isin(post_ids)]
+    df = df.loc[df['parent_id'] == df['link_id']]
+    df['link_id'] = df['link_id'].apply(lambda x: x[3:])
+    df = df.loc[df['link_id'].isin(post_ids)]
 
     def find_labels(text: str):
-        return [q for q in ["NTA", "YTA", "ESH", "NAH", "INFO"] if q in text]
+        return [q for q in ['NTA', 'YTA', 'ESH', 'NAH', 'INFO'] if q in text]
 
-    df["labels"] = df["body"].apply(lambda x: find_labels(x))
-    df["num_labels"] = df["labels"].apply(lambda x: len(x))
-    df = df.loc[df["num_labels"] == 1]
-    df["labels"] = df["labels"].apply(lambda x: x[0])
+    df['labels'] = df['body'].apply(lambda x: find_labels(x))
+    df['num_labels'] = df['labels'].apply(lambda x: len(x))
+    df = df.loc[df['num_labels'] == 1]
+    df['labels'] = df['labels'].apply(lambda x: x[0])
     return df
 ```
 
@@ -161,7 +161,7 @@ together submissions and comments and get the class probabilities for each post.
 ```python
 def merge_comments_and_posts(df_posts, df_comments):
     # map labels to indices
-    itol = ["NTA", "YTA", "ESH", "NAH", "INFO"]
+    itol = ['NTA', 'YTA', 'ESH', 'NAH', 'INFO']
     ltoi = {l:i for i,l in enumerate(itol)}
 
     # clean posts and comments
@@ -176,15 +176,15 @@ def merge_comments_and_posts(df_posts, df_comments):
     post_labels_dict = {post_id: [0,0,0,0,0] for post_id in post_ids}
     for post_id, label, score in zip(comment_post_ids, comment_labels, comment_score):
         post_labels_dict[post_id][ltoi[label]] += score
-    df_posts["label_counts"] = [post_labels_dict[post_id] for post_id in post_ids]
+    df_posts['label_counts'] = [post_labels_dict[post_id] for post_id in post_ids]
     
     # get label probabilities for each post
-    df_posts["label_sum"] = df_posts["label_counts"].apply(lambda x: sum(x))
-    df_posts = df_posts[df_posts["label_sum"] > 0]
-    df_posts["label_probs"] = [[c/s for c in counts] for counts, s in zip(
-        df_posts["label_counts"], df_posts["label_sum"])]
+    df_posts['label_sum'] = df_posts['label_counts'].apply(lambda x: sum(x))
+    df_posts = df_posts[df_posts['label_sum'] > 0]
+    df_posts['label_probs'] = [[c/s for c in counts] for counts, s in zip(
+        df_posts['label_counts'], df_posts['label_sum'])]
 
-    df_posts.to_pickle("aita_2019_posts_labeled.pkl")
-    df_comments.to_pickle("aita_2019_comments_cleaned.pkl")
+    df_posts.to_pickle('aita_2019_posts_labeled.pkl')
+    df_comments.to_pickle('aita_2019_comments_cleaned.pkl')
 ```
 That's it! You can find the whole code [here](https://github.com/amr-amr/am-i-the-asshole/blob/master/data/get_data.py).
