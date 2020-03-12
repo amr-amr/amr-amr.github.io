@@ -11,6 +11,7 @@ In this post, I'll go over the basics of byte-pair encoding (BPE), outline its
 advantages as a tokenization algorithm in natural language processing, 
 and show you some code.
 
+{% include toc %}
 
 ## What is BPE
 [Byte-pair encoding](https://en.wikipedia.org/wiki/Byte_pair_encoding) 
@@ -33,7 +34,7 @@ This subword-level representation has many advantages for NLP tasks, which is wh
 it has been successfully used in many recent state-of-the-art language 
 representation models such as BERT and GPT-2.
 
-# Advantages of BPE
+## Advantages of BPE
 Converting text to a format that allows it to be input into machine learning 
 models is an important part of NLP. This typically involves tokenization:
 splitting the text into tokens that can be mapped to a vocabulary. These 
@@ -55,7 +56,7 @@ and can potentially learn relevant morphological subword representations. For ex
 if "yeet" and "-ing" are in my vocabulary but I have never seen "yeeting", I can
 still infer that "yeeting" means "to yeet".
 
-# BPE in code
+## BPE in code
 ### Initial vocabulary
 First we load our corpus and define our initial vocabulary as all the 
 [latin unicode characters](https://en.wikipedia.org/wiki/Plane_(Unicode)#Basic_Multilingual_Plane) 
