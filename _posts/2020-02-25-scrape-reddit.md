@@ -7,12 +7,11 @@ tags:
   - code
 ---
 
-{% include toc %}
-
 A lot of subreddits have specific submission/comment formats which can make
 for interesting NLP datasets. In this post, I'll show you how to create your own
 dataset from [reddit.com/r/AmITheAsshole](https://www.reddit.com/r/AmITheAsshole).
 
+{% include toc %}
 
 ## Background
 As part of the [ImplementAI 2019 hackathon](https://implementai-2019.devpost.com/) 
