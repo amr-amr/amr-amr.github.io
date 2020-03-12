@@ -7,193 +7,177 @@ tags:
   - code
 ---
 
-A lot of subreddits have specific submission/comment formats which can make
-for interesting NLP datasets. In this post, I'll show you how to create your own
-dataset from [reddit.com/r/AmITheAsshole](https://www.reddit.com/r/AmITheAsshole).
+In this post, I'll go over the basics of byte-pair encoding (BPE), outline its 
+advantages as a tokenization algorithm in natural language processing, 
+and show you some code.
 
 {% include toc %}
 
-## Background
-As part of the [ImplementAI 2019 hackathon](https://implementai-2019.devpost.com/) 
-I wanted to build [something fun](https://devpost.com/software/implementaita/) 
-with the [AllenNLP](https://allennlp.org/) library. 
-I decided to scrape my own dataset from 
-[reddit.com/r/AmItheAsshole/](https://www.reddit.com/r/AmItheAsshole/).
-
-On this subreddit, people post submissions which describe a situation they are in, 
-and they ask whether or not they are the asshole in that situation. Then, people
-reply with their opinion which other people can vote on. Normally, a submission is 
-prefixed with `[AITA]`, and commenters prefix their responses with 
-`NTA` for "not the asshole", 
-`YTA` for "you're the asshole", 
-`ESH` for "everyone sucks here",
-`NAH` for "no assholes here", and
-`INFO` for "more info needed".
-
-My goal was to create a dataset where, given a submission title and description,
-the target output is one of the 5 labels described above. 
-If I scrape submissions and their comments, I can extract the most "likely" label 
-based on the cumulative scores of comments for each label. 
-
-
-## Code
-### Which library to use
-I had previously used [praw](https://github.com/praw-dev/praw) to scrape reddit 
-live, however this option requires credentials to use reddit’s API and the 
-rate-limits can be restrictive if you’re trying to scrape a large historic dataset.
-
-Instead, I opted to use [psaw](https://github.com/dmarx/psaw) which wraps 
-the pushshift.io API and is much more forgiving for scraping larger historic datasets.  
-
-### Scraping submissions
-First, let's instantiate a generator for submissions (posts) on a given subreddit,
-starting from a given date. We also specify which fields we want to keep in a 
-submission object to reduce bandwidth.
+## What is BPE
+[Byte-pair encoding](https://en.wikipedia.org/wiki/Byte_pair_encoding) 
+is a simple data compression algorithm that recursively combines most 
+frequently co-occurring atoms (byte-pairs) into new atoms:
 
 ```python
-from psaw import PushshiftAPI
-import datetime as dt
-
-
-submission_filter = [
-    'author',
-    'author_fullname',
-    'full_link',
-    'is_self',
-    'num_comments',
-    'score',
-    'selftext',
-    'title',
-    'id',
-]
-start_dt = int(dt.datetime(2019, 1, 1).timestamp())
-api = PushshiftAPI()
-posts_gen = api.search_submissions(
-    after=start_dt,
-    subreddit="amitheasshole",
-    filter=submission_filter
-)
+# encoded string        atoms
+s = 'aaabdaaabacabaa'   # {a,b,c,d}
+s = 'ZabdZabacabZ'      # {Z=aa,a,b,c,d}
+s = 'ZYdZYacYZ'         # {Z=aa,Y=ab,a,b,c,d}
+s = 'XdXacYZ'           # {Z=aa,Y=ab,X=ZY,a,b,c,d}
 ```
 
-Next, we start generating some submissions! I decided to simply write them to a
-dataframe which I save every 25,000th submission (in case something crashes).
+With minor modifications, BPE can be used on a corpus of natural 
+language text to create a set of atoms that contains frequent words and subwords, 
+as well as characters. 
 
+This subword-level representation has many advantages for NLP tasks, which is why 
+it has been successfully used in many recent state-of-the-art language 
+representation models such as BERT and GPT-2.
+
+## Advantages of BPE
+Converting text to a format that allows it to be input into machine learning 
+models is an important part of NLP. This typically involves tokenization:
+splitting the text into tokens that can be mapped to a vocabulary. These 
+can then be converted to numerical representations such as word embeddings.
+
+Generally, tokenization was done on a word-level basis. However, this leads to 
+the issue of __out-of-vocabulary__ words, whereby new words can not be represented.
+New words can include misspellings, rare words such as
+["Penrhyndeudraeth"](https://en.wikipedia.org/wiki/Penrhyndeudraeth), or 
+[neologisms](https://en.wikipedia.org/wiki/Neologism) such as 
+["yeeted"](https://www.urbandictionary.com/define.php?term=Yeet). 
+Character-level models can address this, but presumably have limited representational 
+capacities compared to word-level models, since words are very much more than 
+the sum of their characters. 
+
+Subword-level models represent the best of both worlds. They address the issue 
+of out-of-vocabulary words while maintaining rich word-level representations, 
+and can potentially learn relevant morphological subword representations. For example, 
+if "yeet" and "-ing" are in my vocabulary but I have never seen "yeeting", I can
+still infer that "yeeting" means "to yeet".
+
+## BPE in code
+### Initial vocabulary
+First we load our corpus and define our initial vocabulary as all the 
+[latin unicode characters](https://en.wikipedia.org/wiki/Plane_(Unicode)#Basic_Multilingual_Plane) 
+and any other characters in our corpus.
+However, its worth noting that many models use actual bytes to support all 
+languages with a smaller vocabulary. 
 ```python
-import pandas as pd
+from pathlib import Path
 
-df_posts = pd.DataFrame()
-posts = []
-for post in posts_gen:
-    posts.append(post.d_)
-    if len(posts) == 25_000:
-        df_posts = df_posts.append(pd.DataFrame(posts))
-        df_posts.to_pickle("aita_2019_posts.pkl")
-        posts = []
+vocab_itos = ['<unk>'] + [chr(i) for i in range(0x0000, 0x024f)]
+vocab_stoi = {s: i for i,s in enumerate(vocab_itos)}
+
+corpus = Path("corpus.txt").read_text()
+for c in set(corpus):
+    if c not in vocab_stoi:
+        vocab_stoi[c] = len(vocab_itos)
+        vocab_itos += [c]
 ```
 
-### Scraping comments
-Now let's scrape comments. Similarly to the submission generator, we define 
-a start date and filter. However, we also define a query `q` to only retrieve comments
-containing a specific string (in our case, the labels we're interested in).
-Here, I decided to only scrape 100,000 comments for each label, 
-since I was short on time.
+### Pre-tokenization
+If we were to naively run BPE on the entire corpus, the complexity would be 
+O(n<sup>2</sup>) and our resulting vocabulary would likely include phrases.
 
+We can address this issue by first tokenizing the corpus into words, and running
+BPE on each word. Then, the frequency of a "byte-pair" is just the sum of all its 
+word-level frequencies multiplied by the corresponding word frequency. 
+
+For the sake of simplicity, we define words as alphabetical strings and constrain 
+non-alphabetical strings to character-level representations. More sophisticated 
+approaches can be used.
 ```python
-comment_filter = [
-    'author',
-    'author_fullname',
-    'body',
-    'is_submitter',
-    'id',
-    'link_id', # post id
-    'parent_id', # parent id = link id when top level comment
-    'score',
-    'total_awards_received',
-]
-df_comments = pd.DataFrame()
-for q in ["NTA", "YTA", "ESH", "NAH", "INFO"]:
-    comments_gen = api.search_comments(
-        after=start_dt,
-        subreddit="amitheasshole",
-        filter=comment_filter,
-        q=q,
-    )
-    comments = []
-    for comment in comments_gen:
-        comments.append(comment.d_)
-        if len(comments) == 100_000:
-            df_comments = df_comments.append(pd.DataFrame(comments))
-            df_comments.to_pickle("aita_2019_comments.pkl")
-            break
-    df_comments.to_pickle("aita_2019_comments.pkl")
-```
-### Consolidating posts and comments
-Now that we have our submissions and comments, we need to clean them.
-First, we remove posts which do not have the right prefix and are thus not likely 
-to be an "Am I The Asshole?" question. We also remove posts which do not have 
-descriptions (selftext). Lastly, we remove posts which have no comments.
+from collections import Counter
+import re
 
-```python
-
-def clean_posts(df):
-    df = df.loc[(df["title"].str.startswith("AITA")) | (df["title"].str.startswith("WIBTA"))]
-    df = df.loc[~(df["selftext"] == "[removed]")]
-    df = df.loc[~(pd.isna(df["selftext"]))]
-    df = df.loc[~df.selftext == ""]
-    df = df.loc[df["num_comments"] > 0]
-    return df
+pairable_chars = "a-zA-Z"
+word_counts = Counter(re.findall(f"[{pairable_chars}]+", corpus))
+word_encodings = {word: [c for c in word] for word in word_counts.keys()}
 ```
 
-The process for cleaning comments is a little more involved. 
-First, we keep only top-level comments which are a direct response to the submission, and
-not to another comment. Then we remove comments from submissions we did not scrape. 
-Lastly, we remove comments which have no labels or more than one.
+### Build vocabulary
+To run BPE, we need to run a number of iterations until our vocabulary size is 
+reached or there are no more subwords. We can also speed things up by creating 
+more than one "byte-pair" per iteration. 
+
 
 ```python
-def clean_comments(df, post_ids):
-    df = df.loc[df["parent_id"] == df["link_id"]]
-    df["link_id"] = df["link_id"].apply(lambda x: x[3:])
-    df = df.loc[df["link_id"].isin(post_ids)]
+from collections import defaultdict
 
-    def find_labels(text: str):
-        return [q for q in ["NTA", "YTA", "ESH", "NAH", "INFO"] if q in text]
+vocab_size = 10_000
+bp_per_iter = 10
+num_iter = vocab_size - len(vocab_itos)
 
-    df["labels"] = df["body"].apply(lambda x: find_labels(x))
-    df["num_labels"] = df["labels"].apply(lambda x: len(x))
-    df = df.loc[df["num_labels"] == 1]
-    df["labels"] = df["labels"].apply(lambda x: x[0])
-    return df
+for _ in range(num_iter):
+    # generate new bytepair frequencies
+    bp_counts = defaultdict(int)
+    bp_words = defaultdict(set)
+    for word, encodings in word_encodings.items():
+        for bytepair in zip(encodings[:-1], encodings[1:]):
+            bp = "".join(bytepair)
+            if bp not in vocab_stoi:
+                bp = " ".join(bytepair) # space to facilitate word encodings update below
+                bp_counts[bp] += word_counts[word]
+                bp_words[bp].add(word)
+
+    # exit if no more subwords
+    if len(bp_counts) == 0:
+        break
+
+    # update stoi/itos and word_encodings
+    best_bp = sorted(bp_counts, key=bp_counts.get, reverse=True)[:bp_per_iter]
+    for bp in best_bp:
+        merged_bp = bp.replace(" ", "")
+        vocab_stoi[merged_bp] = len(vocab_itos)
+        vocab_itos += [merged_bp]
+        for word in bp_words[bp]:
+            word_encodings[word] = (" ".join(word_encodings[word]).replace(bp, merged_bp)).split(" ")
 ```
 
-Lastly, we can use the `clean_posts` and `clean_comments` functions to merge 
-together submissions and comments and get the class probabilities for each post.
-```python
-def merge_comments_and_posts(df_posts, df_comments):
-    # map labels to indices
-    itol = ["NTA", "YTA", "ESH", "NAH", "INFO"]
-    ltoi = {l:i for i,l in enumerate(itol)}
+### Tokenization
+With our vocabulary, we can now perform greedy subword tokenization. 
+There's also a pretty interesting [paper](https://arxiv.org/abs/1804.10959) 
+on the regularizing effect of tokenizing non-greedily.
 
-    # clean posts and comments
-    df_posts = clean_posts(df_posts)
-    post_ids = df_posts.id.to_list()
-    df_comments = clean_comments(df_comments, post_ids)
+```python
+def tokenize(text: str) -> List[str]:
+    tokens = []
+    token = None
+    for c in text:
+        # expand previous token by one character or append previous token to tokens
+        if token is not None:
+            new_token = token + c
+            if new_token not in vocab_stoi:
+                tokens.append(token)
+                token = None
+            else:
+                token = new_token
+
+        # handle oov tokens
+        if c not in vocab_stoi:
+            tokens.append('<unk>')
+
+        # begin new token
+        elif token is None:
+            token = c
     
-    # get label scores/counts for each post
-    comment_labels = df_comments.labels.to_list()
-    comment_post_ids = df_comments.link_id.to_list()
-    comment_score = df_comments.score.to_list()
-    post_labels_dict = {post_id: [0,0,0,0,0] for post_id in post_ids}
-    for post_id, label, score in zip(comment_post_ids, comment_labels, comment_score):
-        post_labels_dict[post_id][ltoi[label]] += score
-    df_posts["label_counts"] = [post_labels_dict[post_id] for post_id in post_ids]
-    
-    # get label probabilities for each post
-    df_posts["label_sum"] = df_posts["label_counts"].apply(lambda x: sum(x))
-    df_posts = df_posts[df_posts["label_sum"] > 0]
-    df_posts["label_probs"] = [[c/s for c in counts] for counts, s in zip(
-        df_posts["label_counts"], df_posts["label_sum"])]
+    # append last token
+    if token:
+        tokens.append(token)
 
-    df_posts.to_pickle("aita_2019_posts_labeled.pkl")
-    df_comments.to_pickle("aita_2019_comments_cleaned.pkl")
+    return tokens
+
+def detokenize(tokens: List[str]) -> str:
+    text = "".join(tokens)
+    return text
+
+def encode(text: str) -> List[int]:
+    return [vocab_stoi[s] for s in tokenize(text)]
+
+def decode(encodings: List[int]) -> str:
+    return detokenize([vocab_itos[i] for i in encodings])
 ```
-That's it! You can find the whole code [here](https://github.com/amr-amr/am-i-the-asshole/blob/master/data/get_data.py).
+
+For a more complete and customizable implementation of BPE, you can check out a 
+small module I wrote here: [py-bpe](https://github.com/amr-amr/py-bpe)
