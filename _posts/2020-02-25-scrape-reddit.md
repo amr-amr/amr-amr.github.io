@@ -90,43 +90,41 @@ for post in posts_gen:
         posts = []
 ```
 
-### Build vocabulary
-To run BPE, we need to run a number of iterations until our vocabulary size is 
-reached or there are no more subwords. We can also speed things up by creating 
-more than one "byte-pair" per iteration. 
-
+### Scraping comments
+Now let's scrape comments. Similarly to the submission generator, we define 
+a start date and filter. However, we also define a query `q` to only retrieve comments
+containing a specific string (in our case, the labels we're interested in).
+Here, I decided to only scrape 100,000 comments for each label, 
+since I was short on time.
 
 ```python
-from collections import defaultdict
-
-vocab_size = 10_000
-bp_per_iter = 10
-num_iter = vocab_size - len(vocab_itos)
-
-for _ in range(num_iter):
-    # generate new bytepair frequencies
-    bp_counts = defaultdict(int)
-    bp_words = defaultdict(set)
-    for word, encodings in word_encodings.items():
-        for bytepair in zip(encodings[:-1], encodings[1:]):
-            bp = "".join(bytepair)
-            if bp not in vocab_stoi:
-                bp = " ".join(bytepair) # space to facilitate word encodings update below
-                bp_counts[bp] += word_counts[word]
-                bp_words[bp].add(word)
-
-    # exit if no more subwords
-    if len(bp_counts) == 0:
-        break
-
-    # update stoi/itos and word_encodings
-    best_bp = sorted(bp_counts, key=bp_counts.get, reverse=True)[:bp_per_iter]
-    for bp in best_bp:
-        merged_bp = bp.replace(" ", "")
-        vocab_stoi[merged_bp] = len(vocab_itos)
-        vocab_itos += [merged_bp]
-        for word in bp_words[bp]:
-            word_encodings[word] = (" ".join(word_encodings[word]).replace(bp, merged_bp)).split(" ")
+comment_filter = [
+    'author',
+    'author_fullname',
+    'body',
+    'is_submitter',
+    'id',
+    'link_id', # post id
+    'parent_id', # parent id = link id when top level comment
+    'score',
+    'total_awards_received',
+]
+df_comments = pd.DataFrame()
+for q in ["NTA", "YTA", "ESH", "NAH", "INFO"]:
+    comments_gen = api.search_comments(
+        after=start_dt,
+        subreddit="amitheasshole",
+        filter=comment_filter,
+        q=q,
+    )
+    comments = []
+    for comment in comments_gen:
+        comments.append(comment.d_)
+        if len(comments) == 100_000:
+            df_comments = df_comments.append(pd.DataFrame(comments))
+            df_comments.to_pickle("aita_2019_comments.pkl")
+            break
+    df_comments.to_pickle("aita_2019_comments.pkl")
 ```
 
 ### Tokenization
