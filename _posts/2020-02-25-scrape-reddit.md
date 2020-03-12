@@ -13,7 +13,7 @@ dataset from [reddit.com/r/AmITheAsshole](https://www.reddit.com/r/AmITheAsshole
 
 {% include toc %}
 
-## Some background
+## Background
 As part of the [ImplementAI 2019 hackathon](https://implementai-2019.devpost.com/) 
 I wanted to build [something fun](https://devpost.com/software/implementaita/) 
 with the [AllenNLP](https://allennlp.org/) library. 
@@ -36,7 +36,8 @@ If I scrape submissions and their comments, I can extract the most "likely" labe
 based on the cumulative scores of comments for each label. 
 
 
-## Which library to use
+## Code
+### Which library to use
 I had previously used [praw](https://github.com/praw-dev/praw) to scrape reddit 
 live, however this option requires credentials to use reddit’s API and the 
 rate-limits can be restrictive if you’re trying to scrape a large historic dataset.
@@ -44,7 +45,7 @@ rate-limits can be restrictive if you’re trying to scrape a large historic dat
 Instead, I opted to use [psaw](https://github.com/dmarx/psaw) which wraps 
 the pushshift.io API and is much more forgiving for scraping larger historic datasets.  
 
-## Some code
+### Scraping submissions
 First, let's instantiate a generator for submissions (posts) on a given subreddit,
 starting from a given date. We also specify which fields we want to keep in a 
 submission object to reduce bandwidth.
@@ -90,6 +91,7 @@ for post in posts_gen:
         posts = []
 ```
 
+### Scraping comments
 Now let's scrape comments. Similarly to the submission generator, we define 
 a start date and filter. However, we also define a query `q` to only retrieve comments
 containing a specific string (in our case, the labels we're interested in).
@@ -125,7 +127,7 @@ for q in ["NTA", "YTA", "ESH", "NAH", "INFO"]:
             break
     df_comments.to_pickle("aita_2019_comments.pkl")
 ```
-
+### Consolidating posts and comments
 Now that we have our submissions and comments, we need to clean them.
 First, we remove posts which do not have the right prefix and are thus not likely 
 to be an "Am I The Asshole?" question. We also remove posts which do not have 
