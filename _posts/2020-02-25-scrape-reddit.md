@@ -110,10 +110,10 @@ comment_filter = [
     'total_awards_received',
 ]
 df_comments = pd.DataFrame()
-for q in ["NTA", "YTA", "ESH", "NAH", "INFO"]:
+for q in ['NTA', 'YTA', 'ESH', 'NAH', 'INFO']:
     comments_gen = api.search_comments(
         after=start_dt,
-        subreddit="amitheasshole",
+        subreddit='amitheasshole',
         filter=comment_filter,
         q=q,
     )
@@ -122,9 +122,9 @@ for q in ["NTA", "YTA", "ESH", "NAH", "INFO"]:
         comments.append(comment.d_)
         if len(comments) == 100_000:
             df_comments = df_comments.append(pd.DataFrame(comments))
-            df_comments.to_pickle("aita_2019_comments.pkl")
+            df_comments.to_pickle('aita_2019_comments.pkl')
             break
-    df_comments.to_pickle("aita_2019_comments.pkl")
+    df_comments.to_pickle('aita_2019_comments.pkl')
 ```
 
 ### Tokenization
