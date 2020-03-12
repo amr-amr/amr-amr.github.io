@@ -4,6 +4,9 @@ excerpt: "Using Natural Language Processing to categorize and map tweets in real
 collection: projects
 comments: true
 ---
+
+{:toc .toc__menu}
+
 ## What
 <br/><img src='https://raw.githubusercontent.com/amr-amr/CrisisTweetMap/master/doc/output.gif'>
 [CrisisTweetMap](https://github.com/amr-amr/CrisisTweetMap) is a proof-of-concept I built over 24 hours as part of the 
