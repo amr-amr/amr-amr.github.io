@@ -44,24 +44,50 @@ rate-limits can be restrictive if you’re trying to scrape a large historic dat
 Instead, I opted to use [psaw](https://github.com/dmarx/psaw) which wraps 
 the pushshift.io API and is much more forgiving for scraping larger historic datasets.  
 
-### Pre-tokenization
-If we were to naively run BPE on the entire corpus, the complexity would be 
-O(n<sup>2</sup>) and our resulting vocabulary would likely include phrases.
+### Scraping submissions
+First, let's instantiate a generator for submissions (posts) on a given subreddit,
+starting from a given date. We also specify which fields we want to keep in a 
+submission object to reduce bandwidth.
 
-We can address this issue by first tokenizing the corpus into words, and running
-BPE on each word. Then, the frequency of a "byte-pair" is just the sum of all its 
-word-level frequencies multiplied by the corresponding word frequency. 
-
-For the sake of simplicity, we define words as alphabetical strings and constrain 
-non-alphabetical strings to character-level representations. More sophisticated 
-approaches can be used.
 ```python
-from collections import Counter
-import re
+from psaw import PushshiftAPI
+import datetime as dt
 
-pairable_chars = "a-zA-Z"
-word_counts = Counter(re.findall(f"[{pairable_chars}]+", corpus))
-word_encodings = {word: [c for c in word] for word in word_counts.keys()}
+
+submission_filter = [
+    'author',
+    'author_fullname',
+    'full_link',
+    'is_self',
+    'num_comments',
+    'score',
+    'selftext',
+    'title',
+    'id',
+]
+start_dt = int(dt.datetime(2019, 1, 1).timestamp())
+api = PushshiftAPI()
+posts_gen = api.search_submissions(
+    after=start_dt,
+    subreddit="amitheasshole",
+    filter=submission_filter
+)
+```
+
+Next, we start generating some submissions! I decided to simply write them to a
+dataframe which I save every 25,000th submission (in case something crashes).
+
+```python
+import pandas as pd
+
+df_posts = pd.DataFrame()
+posts = []
+for post in posts_gen:
+    posts.append(post.d_)
+    if len(posts) == 25_000:
+        df_posts = df_posts.append(pd.DataFrame(posts))
+        df_posts.to_pickle("aita_2019_posts.pkl")
+        posts = []
 ```
 
 ### Build vocabulary
