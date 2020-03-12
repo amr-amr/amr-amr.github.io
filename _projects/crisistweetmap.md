@@ -5,7 +5,7 @@ collection: projects
 comments: true
 ---
 
-{:toc .toc__menu}
+{% include toc %}
 
 ## What
 <br/><img src='https://raw.githubusercontent.com/amr-amr/CrisisTweetMap/master/doc/output.gif'>
