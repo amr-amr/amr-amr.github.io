@@ -7,9 +7,9 @@ tags:
   - code
 ---
 
-In this post, I'll go over the basics of byte-pair encoding (BPE), outline its 
-advantages as a tokenization algorithm in natural language processing, 
-and show you some code.
+A lot of subreddits have specific submission/comment formats which can make
+for interesting NLP datasets. In this post, I'll show you how to create your own
+dataset from [reddit.com/r/AmITheAsshole](https://www.reddit.com/r/AmITheAsshole).
 
 {% include toc %}
 
