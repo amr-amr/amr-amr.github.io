@@ -84,7 +84,7 @@ for pointer-generator models with coverage.
 attempt to improve the factual consistency of abstractive models by 
 conditioning on facts extracted from the source document.   
 
-**Method**  
+#### Method
 They use OpenIE to extract subject-predicate-object fact triples. They then 
 use a dependency parser to extract subject-predicate and predicate-object fact 
 tuples that are not captured by OpenIE. The dependency parser also allows them 
@@ -98,7 +98,7 @@ on both.
 
 <br/><img src='/images/litreview/factual-consistency/cao2017_model.png'>
 
-**Results**  
+#### Results  
 Using this method, a statistically-significant improvement in informativeness 
 compared to previous state-of-the-art models was found, as measured by ROUGE. 
 The authors also perform human evaluation of factual consistency on a sample of 
@@ -109,7 +109,7 @@ The authors also perform human evaluation of factual consistency on a sample of
 attempt to create a framework for automatic evaluation of factual consistency 
 based on the overlap of fact triplets.  
 
-**Method**  
+#### Method
 The authors use Wikipedia articles and associated facts from the Wikidata 
 knowledge base to create a dataset of reference summaries and associated facts 
 (subject-relation-object triples). The subject in a fact can only be the article 
@@ -132,7 +132,7 @@ will have a target output
 Such that `<t>` separates tokens within the fact, and `<f>` separates facts. 
 During prediction, decoding continues until `<end>` is predicted. 
 
-**Results**  
+#### Results  
 To evaluate the effectiveness of their automatic evaluation, the authors sample 
 wikipedia article summaries and ask 4 evaluators to rate these on a scale of 
 1 to 5 for factual accuracy. They then measure the spearman correlation between 
@@ -154,7 +154,7 @@ to improve the factual consistency of summarization systems by reranking
 candidate summaries generated during beam search, using a score based on 
 natural language inference (NLI, or logical entailment).
 
-**Method**  
+#### Method
 The authors claim that NLI can presumably act as a proxy for factual consistency, 
 since factually consistent information in the summary should be entailed by the
 source document. 
@@ -172,7 +172,7 @@ finding that 107 out of the 200 documents had both consistent and inconsistent
 summaries. For each of these documents, the 5 summaries were re-ranked with the 
 authors' approach.
 
-**Results**  
+#### Results  
 Unfortunately, the reranking had a negligible impact; leaving close to half of 
 the originally incorrect summaries in the first position. The authors conclude 
 that out-of-the-box NLI models are not suitable for evaluating or improving 
@@ -182,7 +182,7 @@ factual consistency, since it does not correspond to NLI performance.
 [Li et al. (2018)](https://www.aclweb.org/anthology/C18-1121/) attempt to 
 improve factual consistency with an entailment-aware encoder and decoder.
 
-**Method**  
+#### Method 
 The authors propose an multi-task encoder, trained on both summarization 
 (Gigaword dataset) and entailment (SNLI dataset). They further incorporate 
 entailment information in the decoder by adopting reward-augmented maximum 
@@ -193,7 +193,7 @@ score) during training.
 
 <br/><img src='/images/litreview/factual-consistency/li2018_model.png'>
 
-**Results**  
+#### Results
 The authors find that their method, applied to a standard seq2seq model with 
 attention and selective coverage, increases the number of  factual consistent 
 summaries from 69.4% to 74.2%, as measured by 5 grad students who had the 
@@ -205,7 +205,7 @@ found that their method improved informativeness as measured by ROUGE.
 attempt to evaluate factual consistency by training a model to distinguish 
 consistent and inconsistent summaries on a new dataset.
 
-**Method**  
+#### Method
 The authors use rule-based transformations to create a new dataset of factually 
 consistent and inconsistent summaries. These text transformations include 
 paraphrasing, negation, noise injection, and swapping of pronouns, entities, and 
@@ -218,7 +218,7 @@ The authors then use this dataset to a train a model on three tasks:
 2. Extract a span from the source document to support prediction;
 3. If factually inconsistent, extract supporting span from summary;
 
-**Results**  
+#### Results
 The authors find that their method outperforms previous entailment-based methods 
 with a weighted accuracy (consistent/inconsistent classification) of ~74% as 
 opposed to ~52%. However, they also remark that their model cannot capture 
