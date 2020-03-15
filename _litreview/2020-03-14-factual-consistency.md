@@ -1,9 +1,9 @@
 ---
 title: "Factual consistency in summarization"
 collection: litreview
+date: 2020-03-14
 permalink: /litreview/2020-03-14-factual-consistency
 excerpt: 'An overview of recent methods for evaluating and improving factual consistency in automatic summarization.'
-date: 2020-03-14
 ---
 
 This is an overview of recent methods for evaluating and improving 
