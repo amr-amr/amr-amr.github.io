@@ -46,23 +46,29 @@ where the ROUGE score isn’t calculated and observed as a reward until the end 
 We built gym-summarizer to explore three issues we saw with current approaches 
 of applying reinforcement learning to summarization:  
 
+### Reproducibility and baselines
+By creating a gym environment for summarization, we wanted to leverage its 
+standard interface to make it easier to run reproducible experiments and 
+baselines. While most approaches use either REINFORCE or actor-critic algorithms, 
+we wanted to make it easy to use the variety of out-of-the-box 
+models from [stable-baselines](https://github.com/hill-a/stable-baselines) 
+to e.g. compare value-based methods and policy-based methods.
 
-- __Reliance on supervised-learning__:
+### Credit assignment problem
+Most approaches use sparse terminal rewards, meaning you only observe 
+a reward once a whole summary has been generated. This is due to the 
+fact that BLEU or ROUGE (which are commonly used as rewards) are 
+sequence-level metrics. This leads to a significant credit assignment problem. 
+For example, if you generate the first half of a summary flawlessly but the second 
+half degenerates into something very bad, you have no way of learning that distinction 
+if you only obtain one reward at the end of the summary. In contrast, if you obtain a 
+reward signal for every word generated, it could address this credit assignment issue. 
+We wanted to see if these kind of dense rewards could improve learning and performance.
+
+### End-to-end RL
 Most approaches involve supervised pretraining with a maximum 
 likelihood objective, followed by fine-tuning with a reinforcement learning 
 objective. We wanted to see if effective summarization could be learned solely with RL.
-
-- __Limited baselines for different algorithms__:  
-Most approaches use either REINFORCE or actor-critic algorithms. 
-We wanted to make it easy to use out-of-the-box models from 
-[stable-baselines](https://github.com/hill-a/stable-baselines) 
-to e.g. compare value-based methods and policy-based methods.
-
-- __Sparse rewards__:
-Most approaches use sparse terminal rewards, 
-which leads to a credit assignment problem 
-(i.e. how do you know which action was good or bad). 
-We wanted to see if dense rewards could improve learning and performance.
 
 
 ## How we built gym-summarizer
