@@ -7,13 +7,13 @@
 
 # Site Settings
 locale                   : "en-US"
-title                    : "amr-amr"
+title                    : "mirandrom"
 title_separator          : "-"
 name                     : &name "Andrei Mircea"
 description              : &description "M.Sc. Natural Language Processing @ McGill University"
-url                      : https://amr-amr.github.io # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
+url                      : https://mirandrom.github.io # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
 baseurl                  : "" # the subpath of your site, e.g. "/blog"
-repository               : "amr-amr.github.io"
+repository               : "mirandrom.github.io"
 teaser                   :  # filename of teaser fallback teaser image placed in /images/, .e.g. "500x300.png"
 breadcrumbs              : false # true, false (default)
 words_per_minute         : 160
@@ -23,7 +23,7 @@ talkmap_link             : false #change to true to add link to talkmap on talks
 comments:
   provider               : "disqus" # false (default), "disqus", "discourse", "facebook", "google-plus", "staticman", "custom"
   disqus:
-    shortname            : "amr-amr-github-io"
+    shortname            : "mirandrom-github-io"
   discourse:
     server               : # https://meta.discourse.org/t/embedding-discourse-comments-via-javascript/31963 , e.g.: meta.discourse.org
   facebook:
@@ -96,7 +96,7 @@ author:
   flickr           :
   facebook         :
   foursquare       :
-  github           : "amr-amr"
+  github           : "mirandrom"
   google_plus      :
   keybase          :
   instagram        :
